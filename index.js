@@ -104,13 +104,18 @@ async function run() {
 
         // ! recommendation api
 
-        // ! show all recommendation: now filter with email to search with email
+        // ! show all recommendation: now filter with email to search with email : we will also filter with queryId
         app.get('/recommendations', async (req, res) => {
 
             const email = req.query.recommenderEmail;
             let recommendation = {};
             if (email) {
                 recommendation = { recommenderEmail: email }
+            }
+
+            const queryId = req.query.queryId;
+            if (queryId) {
+                recommendation = { queryId: queryId }
             }
 
             const cursor = recommendationCollection.find(recommendation);
