@@ -47,7 +47,16 @@ async function run() {
                 query = { email: email }
             }
 
-            const cursor = queryCollection.find(query);
+            // const cursor = queryCollection.find(query);   // for normal api
+            const cursor = queryCollection.find(query).sort({ time: -1 }); // for sorted api
+
+            const result = await cursor.toArray();
+            res.send(result);
+        })
+
+        // ! read - first 6 data send to client (already sorted by descending)
+        app.get('/queries-six', async (req, res) => {
+            const cursor = queryCollection.find().limit(6).sort({ time: -1 });
             const result = await cursor.toArray();
             res.send(result);
         })
@@ -83,7 +92,7 @@ async function run() {
             res.send(result);
         })
 
-        
+
         // ! delete my query
         app.delete('/queries/:id', async (req, res) => {
             const id = req.params.id;
