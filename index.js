@@ -27,6 +27,7 @@ async function run() {
 
         const database = client.db("queryDB");
         const queryCollection = database.collection("queries");
+        const recommendationCollection = database.collection("recommendation");
 
         // ! add query
         app.post('/queries', async (req, res) => {
@@ -37,9 +38,14 @@ async function run() {
             res.send(result);
         })
 
-        // ! show all queries
+        // ! show all queries: now filter with email
         app.get('/queries', async (req, res) => {
-            const cursor = queryCollection.find();
+            const email = req.query.email;
+            let query = {};
+            if (email) {
+                query = { email: email }
+            }
+            const cursor = queryCollection.find(query);
             const result = await cursor.toArray();
             res.send(result);
         })
@@ -51,6 +57,54 @@ async function run() {
             const result = await queryCollection.findOne(query);
             res.send(result);
         })
+
+
+        // ! recommendation api
+
+        // ! show all recommendation
+        app.get('/recommendations', async (req, res) => {
+            const cursor = recommendationCollection.find();
+            const result = await cursor.toArray();
+            res.send(result);
+        })
+
+        // ! add recommendation
+        app.post('/recommendations', async (req, res) => {
+            const recommendation = req.body;
+            const result = await recommendationCollection.insertOne(recommendation);
+
+            // ----------------------------------------------------------------------
+
+            // count how many were recommended
+            // Not the best way (use aggregate) 
+            // skip --> it
+
+            // const id = application.job_id;
+            // const query = { _id: new ObjectId(id) }
+            // const job = await jobsCollection.findOne(query);
+
+            // let newCount = 0;
+            // if (job.applicationCount) {
+            //     newCount = job.applicationCount + 1;
+            // }
+            // else {
+            //     newCount = 1;
+            // }
+
+            // // now update the job info
+            // const filter = { _id: new ObjectId(id) };
+            // const updatedDoc = {
+            //     $set: {
+            //         applicationCount: newCount   // fieldname: value
+            //     }
+            // }
+
+            // const updateResult = await jobsCollection.updateOne(filter, updatedDoc);
+
+            // -----------------------------------------------------------------------
+
+            res.send(result);
+        });
 
         // Send a ping to confirm a successful connection
         // await client.db("admin").command({ ping: 1 });
