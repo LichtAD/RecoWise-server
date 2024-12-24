@@ -38,19 +38,21 @@ async function run() {
             res.send(result);
         })
 
-        // ! show all queries: now filter with email
+        // ! show all queries: now filter with email to search with email
         app.get('/queries', async (req, res) => {
+
             const email = req.query.email;
             let query = {};
             if (email) {
                 query = { email: email }
             }
+
             const cursor = queryCollection.find(query);
             const result = await cursor.toArray();
             res.send(result);
         })
 
-        // ! search by id query
+        // ! search by id query to get specific query
         app.get('/queries/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) };
@@ -61,10 +63,25 @@ async function run() {
 
         // ! recommendation api
 
-        // ! show all recommendation
+        // ! show all recommendation: now filter with email to search with email
         app.get('/recommendations', async (req, res) => {
-            const cursor = recommendationCollection.find();
+
+            const email = req.query.recommenderEmail;
+            let recommendation = {};
+            if (email) {
+                recommendation = { recommenderEmail: email }
+            }
+
+            const cursor = recommendationCollection.find(recommendation);
             const result = await cursor.toArray();
+            res.send(result);
+        })
+
+        // ! search by recommendation id to get specific recommendation
+        app.get('/recommendations/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const result = await recommendationCollection.findOne(query);
             res.send(result);
         })
 
@@ -73,38 +90,26 @@ async function run() {
             const recommendation = req.body;
             const result = await recommendationCollection.insertOne(recommendation);
 
-            // ----------------------------------------------------------------------
-
-            // count how many were recommended
-            // Not the best way (use aggregate) 
-            // skip --> it
-
-            // const id = application.job_id;
-            // const query = { _id: new ObjectId(id) }
-            // const job = await jobsCollection.findOne(query);
-
-            // let newCount = 0;
-            // if (job.applicationCount) {
-            //     newCount = job.applicationCount + 1;
-            // }
-            // else {
-            //     newCount = 1;
-            // }
-
-            // // now update the job info
-            // const filter = { _id: new ObjectId(id) };
-            // const updatedDoc = {
-            //     $set: {
-            //         applicationCount: newCount   // fieldname: value
-            //     }
-            // }
-
-            // const updateResult = await jobsCollection.updateOne(filter, updatedDoc);
-
-            // -----------------------------------------------------------------------
+            // count recommendation
+            const query = { _id: new ObjectId(recommendation.queryId) };
+            const updateDoc = {
+                $inc: { count: 1 },
+                // $set: { lastUpdatedAt: new Date() }
+            };
+            await queryCollection.updateOne(query, updateDoc);    // adding to /queries as we added to queryCollection
 
             res.send(result);
         });
+
+        // ! delete recommendation
+        app.delete('/recommendations/:id', async (req, res) => {
+            const id = req.params.id;
+            console.log('plz delete', id);
+
+            const query = { _id: new ObjectId(id) };
+            const result = await recommendationCollection.deleteOne(query);
+            res.send(result);
+        })
 
         // Send a ping to confirm a successful connection
         // await client.db("admin").command({ ping: 1 });
