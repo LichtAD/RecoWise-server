@@ -32,7 +32,7 @@ async function run() {
         // ! add query
         app.post('/queries', async (req, res) => {
             const newQuery = req.body;
-            console.log(newQuery);
+            // console.log(newQuery);
 
             const result = await queryCollection.insertOne(newQuery);
             res.send(result);
@@ -57,6 +57,37 @@ async function run() {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) };
             const result = await queryCollection.findOne(query);
+            res.send(result);
+        })
+
+        // ! update - update specific query data
+        app.put('/queries/:id', async (req, res) => {
+            const id = req.params.id;
+            const updatedQuery = req.body;              // body thk info paisi
+            // console.log('updated Query', updatedQuery);
+
+            const filter = { _id: new ObjectId(id) };
+            const options = { upsert: true };
+            const updatedQueryDoc = {                 // info gula ekta updated variable e set krsi
+                $set: {
+                    product_name: updatedQuery.product_name,
+                    product_brand: updatedQuery.product_brand,
+                    product_image: updatedQuery.product_image,
+                    query_title: updatedQuery.query_title,
+                    reason: updatedQuery.reason,
+                    lastUpdatedAt: updatedQuery.current_time,
+                }
+            }
+
+            const result = await queryCollection.updateOne(filter, updatedQueryDoc, options);       // filter kore oita update krsi
+            res.send(result);
+        })
+
+        // ! delete my query
+        app.delete('/queries/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const result = await queryCollection.deleteOne(query);
             res.send(result);
         })
 
@@ -88,6 +119,9 @@ async function run() {
         // ! add recommendation
         app.post('/recommendations', async (req, res) => {
             const recommendation = req.body;
+
+            // console.log(recommendation.queryId);                // fanta r id - queries e - jkhane count ase
+
             const result = await recommendationCollection.insertOne(recommendation);
 
             // count recommendation
@@ -101,13 +135,29 @@ async function run() {
             res.send(result);
         });
 
-        // ! delete recommendation
-        app.delete('/recommendations/:id', async (req, res) => {
+        // ! delete recommendation: as we need two thing from this api, we will use post instead of delete
+        app.post('/recommendations/:id', async (req, res) => {
             const id = req.params.id;
-            console.log('plz delete', id);
+            // console.log('plz delete', id);           // recommendation id in recommendation
 
+            // ! decrease the count
+            const recommendation = req.body;
+
+            // console.log('recommendation', req.body);
+            // console.log('recommendation.queryId', recommendation.query_id);
+
+            const query2 = { _id: new ObjectId(recommendation.query_id) };
+
+            const updateDoc = {
+                $inc: { count: -1 },
+            }
+            const updateResult = await queryCollection.updateOne(query2, updateDoc);
+            // console.log('Update result:', updateResult);
+
+            // ! age count decrease kore delete krtisi
             const query = { _id: new ObjectId(id) };
             const result = await recommendationCollection.deleteOne(query);
+
             res.send(result);
         })
 
