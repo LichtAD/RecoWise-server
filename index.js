@@ -101,7 +101,7 @@ async function run() {
 
             console.log('query which is email', req.query.email);
 
-            console.log('cookies', req.cookies);
+            console.log('cookies query', req.cookies);
 
             // // ! can't access other user data
             // if (req.user.email != req.query.email) {
@@ -172,11 +172,11 @@ async function run() {
 
         // ! recommendation api
 
-        // ! show all recommendation : filter with recommenderEmail  : filter with queryId : filter with userEmail (who posted the query)
-        app.get('/recommendations', async (req, res) => {
+        // ! show all recommendation : filter with recommenderEmail (MyRecommendations)  : filter with  (recommend -> QueryDetails) : filter with userEmail (who posted the query) (RecommendationForMe)
+        app.get('/recommendations', verifyToken, async (req, res) => {
 
-            const email = req.query.recommenderEmail;
             let recommendation = {};
+            const email = req.query.recommenderEmail;
             if (email) {
                 recommendation = { recommenderEmail: email }
             }
@@ -190,6 +190,10 @@ async function run() {
             if (userEmail) {
                 recommendation = { userEmail: userEmail }
             }
+
+            // let recommendation = { recommenderEmail: req.user.email, queryId: req.query.queryId, userEmail: req.query.userEmail };
+
+            console.log('cookies recommendation', req.cookies);
 
             const cursor = recommendationCollection.find(recommendation);
             const result = await cursor.toArray();
