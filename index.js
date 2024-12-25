@@ -9,7 +9,11 @@ const cookieParser = require('cookie-parser');
 
 // middleware
 app.use(cors({
-    origin: ['http://localhost:5173'],
+    origin: [
+        'http://localhost:5173',
+        'https://project-recommendation-lichtad.web.app',
+        'https://project-recommendation-lichtad.firebaseapp.com',
+    ],
     credentials: true,
 }));
 app.use(express.json());
@@ -66,7 +70,9 @@ async function run() {
             const token = jwt.sign(user, process.env.JWT_SECRET, { expiresIn: '1h' });
             res.cookie('token', token, {
                 httpOnly: true,
-                secure: false,
+                // secure: false,
+                secure: process.env.NODE_ENV === "production",
+                sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
             })
                 // .send({ success: true });
                 .send({ success: true, token: token });
@@ -77,7 +83,9 @@ async function run() {
             res
                 .clearCookie('token', {
                     httpOnly: true,
-                    secure: false,
+                    // secure: false,
+                    secure: process.env.NODE_ENV === "production",
+                    sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
                 })
                 .send({ success: true })
         })
@@ -97,7 +105,7 @@ async function run() {
         app.get('/queries', verifyToken, async (req, res) => {
 
             // const email = req.query.email;
-            let query = {email : req.user.email};
+            let query = { email: req.user.email };
 
             console.log('query which is email', req.query.email);
 
