@@ -15,6 +15,31 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser());
 
+
+const verifyToken = (req, res, next) => {
+    // console.log('inside verify token');
+
+    const token = req?.cookies?.token;
+    // console.log(token);
+
+    if (!token) {
+        return res.status(401).send('unauthorized access');
+    }
+
+    // if token is there -> verify
+    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+        if (err) {
+            return res.status(403).send({ message: 'unauthorized access' });
+        }
+        req.user = decoded;
+
+        // console.log('decoded', req.user);
+
+        next();
+    })
+}
+
+
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.xy3cn.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -69,20 +94,30 @@ async function run() {
         })
 
         // ! show all queries: now filter with email to search with email
-        app.get('/queries', async (req, res) => {
+        app.get('/queries', verifyToken, async (req, res) => {
 
-            const email = req.query.email;
-            let query = {};
-            if (email) {
-                query = { email: email }
-            }
+            // const email = req.query.email;
+            let query = {email : req.user.email};
+
+            console.log('query which is email', req.query.email);
 
             console.log('cookies', req.cookies);
-            console.log('---------------------------------------------');
+
+            // // ! can't access other user data
+            // if (req.user.email != req.query.email) {
+            //     return res.status(403).send({ message: 'forbidden access' })
+            // }
 
             // const cursor = queryCollection.find(query);   // for normal api
             const cursor = queryCollection.find(query).sort({ time: -1 }); // for sorted api
 
+            const result = await cursor.toArray();
+            res.send(result);
+        })
+
+        // ! query read only
+        app.get('/queries-only', async (req, res) => {
+            const cursor = queryCollection.find();
             const result = await cursor.toArray();
             res.send(result);
         })
