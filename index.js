@@ -117,7 +117,7 @@ async function run() {
 
         // ! query read only
         app.get('/queries-only', async (req, res) => {
-            const cursor = queryCollection.find();
+            const cursor = queryCollection.find().sort({ time: -1 });
             const result = await cursor.toArray();
             res.send(result);
         })
