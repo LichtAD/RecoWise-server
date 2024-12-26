@@ -24,7 +24,7 @@ const verifyToken = (req, res, next) => {
     // console.log('inside verify token');
 
     const token = req?.cookies?.token;
-    // console.log(token);
+    console.log(token);
 
     if (!token) {
         return res.status(401).send('unauthorized access');
@@ -93,7 +93,7 @@ async function run() {
         // ! query related apis
 
         // ! add query
-        app.post('/queries', async (req, res) => {
+        app.post('/queries', verifyToken, async (req, res) => {
             const newQuery = req.body;
             // console.log(newQuery);
 
@@ -125,8 +125,20 @@ async function run() {
 
         // ! query read only
         app.get('/queries-only', async (req, res) => {
-            const cursor = queryCollection.find().sort({ time: -1 });
+
+            const filterData = req.query.filter;
+            // console.log('filter data', filterData);
+            const filter = {}
+            if(filterData){
+                filter.product_name = {
+                    $regex: filterData,
+                    $options: 'i'
+                }
+            }
+
+            const cursor = queryCollection.find(filter).sort({ time: -1 });
             const result = await cursor.toArray();
+            // console.log('result', result);
             res.send(result);
         })
 
