@@ -129,7 +129,7 @@ async function run() {
             const filterData = req.query.filter;
             // console.log('filter data', filterData);
             const filter = {}
-            if(filterData){
+            if (filterData) {
                 filter.product_name = {
                     $regex: filterData,
                     $options: 'i'
@@ -154,6 +154,20 @@ async function run() {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) };
             const result = await queryCollection.findOne(query);
+            res.send(result);
+        })
+
+        // ! sort by oldest time
+        app.get('/queries-sort', async (req, res) => {
+            const cursor = queryCollection.find().sort({ time: 1 });
+            const result = await cursor.toArray();
+            res.send(result);
+        })
+
+        // ! sort by name
+        app.get('/queries-sort-name', async (req, res) => {
+            const cursor = queryCollection.find().sort({ product_name: 1 });
+            const result = await cursor.toArray();
             res.send(result);
         })
 
